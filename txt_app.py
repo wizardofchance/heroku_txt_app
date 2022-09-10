@@ -5,7 +5,7 @@ import re
 
 def fn_load():
     tfidf_transformer_ = load('./tfidf_transformer.joblib')  
-    clf = load('./txt_model_v2.py.joblib') 
+    clf = load('./txt_model_v2.joblib') 
     return tfidf_transformer_, clf
 
 
