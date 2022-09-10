@@ -1,22 +1,12 @@
 import streamlit as st
-import numpy as np
-import pandas as pd
 from joblib import load
-from collections import Counter
 import re
 
 
-st.title('TOXIC COMMENTS CLASSIFICATION APP')
-
-df_idf_ = st.file_uploader("CHOOSE CSV FILE WITH IDF INFO")
-clf_ = st.file_uploader("CHOOSE CLASSIFIER JOBLIB FILE")
-
-
-@st.cache
-def fn_load():    
-    df_idf = pd.read_csv(df_idf_)  
-    clf = load(clf_) 
-    return df_idf, clf
+def fn_load():
+    tfidf_transformer_ = load('./tfidf_transformer.joblib')  
+    clf = load('./txt_model_v2.py.joblib') 
+    return tfidf_transformer_, clf
 
 
 
@@ -43,28 +33,27 @@ def fn_preprocess_text(sentence):
 
 
 
-def fn_predict(txt, df_idf, model):
+def fn_predict(sentence, tfidf_transformer, clf):
 
-    txt = fn_preprocess_text(txt)
-    tf =  dict(Counter(txt.split()))
-    tf_vec = np.array([tf.get(word, 0) for word in df_idf.words])
-    tfidf_vec = (tf_vec * df_idf.idf.values).reshape(1, -1)
-
-    label = model.predict(tfidf_vec)
-    probas = model.predict_proba(tfidf_vec).flatten()
+    sentence = fn_preprocess_text(sentence) 
+    tfidf_vec = tfidf_transformer.transform([sentence])
+    label = clf.predict(tfidf_vec)
+    probas = clf.predict_proba(tfidf_vec).flatten()
     proba = probas[label]
 
     return f'label = {label}, proba = {proba}'
 
 
-if df_idf_ is not None and clf_ is not None:
 
-    df_idf, clf = fn_load()
-    sentence = st.text_input("TYPE/COPY/PASTE THE SENTENCE TO BE CLASSIFIED:")
+st.title('TOXIC COMMENTS CLASSIFICATION APP')
+
+tfidf_transformer, clf = fn_load()
+sentence = st.text_input("TYPE/COPY/PASTE THE SENTENCE TO BE CLASSIFIED:")
+
+if sentence is not None:
     
-    if sentence is not None:
-        
-        st.write(fn_predict(sentence, df_idf, clf))
+    y_pred = fn_predict(sentence, tfidf_transformer, clf)          
+    st.write(y_pred)
 
 
 
